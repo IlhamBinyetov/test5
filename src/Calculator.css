@@ -7,6 +7,18 @@
     0 20px 60px rgba(0, 0, 0, 0.4),
     0 0 0 1px rgba(255, 255, 255, 0.05);
   margin: 0 auto;
+  outline: none;
+}
+
+.calculator:focus {
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.4),
+    0 0 0 2px rgba(255, 159, 10, 0.5);
+}
+
+/* Remove default focus outline from buttons */
+.btn:focus {
+  outline: none;
 }
 
 .display {
