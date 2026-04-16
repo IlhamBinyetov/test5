@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import './Calculator.css'
 
 function Calculator() {
@@ -8,6 +8,8 @@ function Calculator() {
   const [operator, setOperator] = useState(null)
   const [waitingForOperand, setWaitingForOperand] = useState(false)
   const [history, setHistory] = useState('')
+  const [activeKey, setActiveKey] = useState(null)
+  const calculatorRef = useRef(null)
 
   const inputDigit = (digit) => {
     if (waitingForOperand) {
@@ -84,7 +86,8 @@ function Calculator() {
     if (operator && prevValue != null) {
       const inputValue = parseFloat(display)
       const result = performCalculation(operator, prevValue, inputValue)
-      setHistory(`${prevValue} ${operator} ${inputValue} =`)
+      const displayOp = { '+': '+', '-': '−', '*': '×', '/': '÷' }[operator] || operator
+      setHistory(`${prevValue} ${displayOp} ${inputValue} =`)
       setDisplay(String(result))
       setPrevValue(null)
       setOperator(null)
@@ -112,38 +115,149 @@ function Calculator() {
     return value
   }
 
+  // Keyboard mapping: key -> button label for visual feedback
+  const keyMap = {
+    '0': '0', '1': '1', '2': '2', '3': '3', '4': '4',
+    '5': '5', '6': '6', '7': '7', '8': '8', '9': '9',
+    '.': '.', ',': '.',
+    '+': '+', '-': '−', '*': '×', '/': '÷',
+    'Enter': '=', '=': '=',
+    'Backspace': '⌫', 'Delete': 'AC', 'Escape': 'AC',
+    '%': '%',
+  }
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Prevent default for calculator keys (e.g. '/' would open browser search)
+      if (keyMap[e.key]) {
+        e.preventDefault()
+      }
+
+      const key = e.key
+
+      // Numbers 0-9
+      if (/^[0-9]$/.test(key)) {
+        inputDigit(parseInt(key))
+        setActiveKey(key)
+        return
+      }
+
+      // Decimal point
+      if (key === '.' || key === ',') {
+        inputDecimal()
+        setActiveKey('.')
+        return
+      }
+
+      // Operators
+      if (key === '+') {
+        handleOperator('+')
+        setActiveKey('+')
+        return
+      }
+      if (key === '-') {
+        handleOperator('-')
+        setActiveKey('−')
+        return
+      }
+      if (key === '*') {
+        handleOperator('*')
+        setActiveKey('×')
+        return
+      }
+      if (key === '/') {
+        handleOperator('/')
+        setActiveKey('÷')
+        return
+      }
+
+      // Equals / Enter
+      if (key === 'Enter' || key === '=') {
+        handleEquals()
+        setActiveKey('=')
+        return
+      }
+
+      // Backspace
+      if (key === 'Backspace') {
+        handleBackspace()
+        setActiveKey('⌫')
+        return
+      }
+
+      // Clear
+      if (key === 'Escape' || key === 'Delete') {
+        clear()
+        setActiveKey('AC')
+        return
+      }
+
+      // Percent
+      if (key === '%') {
+        inputPercent()
+        setActiveKey('%')
+        return
+      }
+
+      // Toggle sign with F9 or 's' key
+      if (key === 'F9' || key === 's' || key === 'S') {
+        toggleSign()
+        setActiveKey('+/-')
+        return
+      }
+    }
+
+    const handleKeyUp = () => {
+      setActiveKey(null)
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
+    }
+  }, [display, operator, prevValue, waitingForOperand])
+
+  // Helper to determine if a button should show active state
+  const isActive = (label) => activeKey === label
+
   return (
-    <div className="calculator">
+    <div className="calculator" ref={calculatorRef}>
       <div className="display">
         <div className="history">{history || '\u00A0'}</div>
         <div className="expression">{expression || '\u00A0'}</div>
         <div className="value">{formatDisplay(display)}</div>
       </div>
+      <div className="keyboard-hint">
+        Keyboard: 0-9, +−×÷, Enter, Esc, Backspace, %, S (+/-)
+      </div>
       <div className="keypad">
-        <button className="btn function" onClick={clear}>AC</button>
-        <button className="btn function" onClick={toggleSign}>+/-</button>
-        <button className="btn function" onClick={inputPercent}>%</button>
-        <button className="btn operator" onClick={() => handleOperator('/')}>÷</button>
+        <button className={`btn function ${isActive('AC') ? 'active' : ''}`} onClick={clear}>AC</button>
+        <button className={`btn function ${isActive('+/-') ? 'active' : ''}`} onClick={toggleSign}>+/-</button>
+        <button className={`btn function ${isActive('%') ? 'active' : ''}`} onClick={inputPercent}>%</button>
+        <button className={`btn operator ${isActive('÷') ? 'active' : ''}`} onClick={() => handleOperator('/')}>÷</button>
 
-        <button className="btn number" onClick={() => inputDigit(7)}>7</button>
-        <button className="btn number" onClick={() => inputDigit(8)}>8</button>
-        <button className="btn number" onClick={() => inputDigit(9)}>9</button>
-        <button className="btn operator" onClick={() => handleOperator('*')}>×</button>
+        <button className={`btn number ${isActive('7') ? 'active' : ''}`} onClick={() => inputDigit(7)}>7</button>
+        <button className={`btn number ${isActive('8') ? 'active' : ''}`} onClick={() => inputDigit(8)}>8</button>
+        <button className={`btn number ${isActive('9') ? 'active' : ''}`} onClick={() => inputDigit(9)}>9</button>
+        <button className={`btn operator ${isActive('×') ? 'active' : ''}`} onClick={() => handleOperator('*')}>×</button>
 
-        <button className="btn number" onClick={() => inputDigit(4)}>4</button>
-        <button className="btn number" onClick={() => inputDigit(5)}>5</button>
-        <button className="btn number" onClick={() => inputDigit(6)}>6</button>
-        <button className="btn operator" onClick={() => handleOperator('-')}>−</button>
+        <button className={`btn number ${isActive('4') ? 'active' : ''}`} onClick={() => inputDigit(4)}>4</button>
+        <button className={`btn number ${isActive('5') ? 'active' : ''}`} onClick={() => inputDigit(5)}>5</button>
+        <button className={`btn number ${isActive('6') ? 'active' : ''}`} onClick={() => inputDigit(6)}>6</button>
+        <button className={`btn operator ${isActive('−') ? 'active' : ''}`} onClick={() => handleOperator('-')}>−</button>
 
-        <button className="btn number" onClick={() => inputDigit(1)}>1</button>
-        <button className="btn number" onClick={() => inputDigit(2)}>2</button>
-        <button className="btn number" onClick={() => inputDigit(3)}>3</button>
-        <button className="btn operator" onClick={() => handleOperator('+')}>+</button>
+        <button className={`btn number ${isActive('1') ? 'active' : ''}`} onClick={() => inputDigit(1)}>1</button>
+        <button className={`btn number ${isActive('2') ? 'active' : ''}`} onClick={() => inputDigit(2)}>2</button>
+        <button className={`btn number ${isActive('3') ? 'active' : ''}`} onClick={() => inputDigit(3)}>3</button>
+        <button className={`btn operator ${isActive('+') ? 'active' : ''}`} onClick={() => handleOperator('+')}>+</button>
 
-        <button className="btn number zero" onClick={() => inputDigit(0)}>0</button>
-        <button className="btn number" onClick={inputDecimal}>.</button>
-        <button className="btn backspace" onClick={handleBackspace}>⌫</button>
-        <button className="btn equals" onClick={handleEquals}>=</button>
+        <button className={`btn number zero ${isActive('0') ? 'active' : ''}`} onClick={() => inputDigit(0)}>0</button>
+        <button className={`btn number ${isActive('.') ? 'active' : ''}`} onClick={inputDecimal}>.</button>
+        <button className={`btn backspace ${isActive('⌫') ? 'active' : ''}`} onClick={handleBackspace}>⌫</button>
+        <button className={`btn equals ${isActive('=') ? 'active' : ''}`} onClick={handleEquals}>=</button>
       </div>
     </div>
   )

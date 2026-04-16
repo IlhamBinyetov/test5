@@ -45,11 +45,20 @@
   white-space: nowrap;
 }
 
+.keyboard-hint {
+  text-align: center;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.25);
+  padding: 0 16px 4px;
+  font-family: 'SF Pro Display', system-ui, sans-serif;
+  letter-spacing: 0.5px;
+}
+
 .keypad {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 12px;
-  padding: 12px 16px 20px;
+  padding: 8px 16px 20px;
 }
 
 .btn {
@@ -68,8 +77,29 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.btn:active {
+.btn:active,
+.btn.active {
   transform: scale(0.92);
+}
+
+.btn.number.active {
+  background: #4a4a4c;
+}
+
+.btn.function.active {
+  background: #d0d0d0;
+}
+
+.btn.operator.active {
+  background: #ffc660;
+}
+
+.btn.equals.active {
+  background: #ffc660;
+}
+
+.btn.backspace.active {
+  background: #4a4a4c;
 }
 
 .btn.number {
@@ -137,6 +167,10 @@
 
   .display .value {
     font-size: 40px;
+  }
+
+  .keyboard-hint {
+    font-size: 9px;
   }
 
   .btn {
